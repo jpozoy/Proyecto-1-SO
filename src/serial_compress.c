@@ -50,7 +50,7 @@ static void fwrite_le32(FILE *f, uint32_t val) {
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        fprintf(stderr, "Uso: %s <directorio_entrada> <archivo_salida>\n", argv[0]);
+        fprintf(stderr, "Uso: %s <directorio_entrada> <archivo_salida.huff>\n", argv[0]);
         return 1;
     }
     const char *input_dir   = argv[1];
@@ -69,7 +69,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    /* Header global: magic (4) + version (1) + reserved (3) + num_files (4) */
     fwrite("HUFF", 1, 4, out);
     uint8_t ver_reserved[4] = {0x01, 0x00, 0x00, 0x00};
     fwrite(ver_reserved, 1, 4, out);
@@ -84,9 +83,6 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(out);
-
-    long long t_end = now_ms();
-    printf("Tiempo total: %lld ms\n", t_end - t_start);
-
+    printf("Tiempo total: %lld ms\n", now_ms() - t_start);
     return 0;
 }
