@@ -36,6 +36,7 @@ static int collect_txt(const char *dir, char **files, int *count) {
     return 0;
 }
 
+//p
 static int cmp_str(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
