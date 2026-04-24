@@ -62,6 +62,7 @@ typedef struct {
 static void *worker(void *arg) {
     WorkerCtx *ctx = (WorkerCtx *)arg;
     while (1) {
+        /* Tomar el próximo archivo disponible */
         pthread_mutex_lock(ctx->mtx);
         int idx = *(ctx->next);
         if (idx >= ctx->total) {
@@ -70,7 +71,6 @@ static void *worker(void *arg) {
         }
         (*(ctx->next))++;
         pthread_mutex_unlock(ctx->mtx);
-
         ctx->results[idx] = compress_one_file(ctx->files[idx], ctx->base_dir);
     }
     return NULL;
@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
         .total    = num_files,
         .mtx      = &mtx
     };
+
 
     int nthreads = NUM_THREADS < num_files ? NUM_THREADS : num_files;
     pthread_t *threads = malloc(sizeof(pthread_t) * nthreads);
