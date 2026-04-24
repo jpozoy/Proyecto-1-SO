@@ -73,8 +73,6 @@ static HuffNode *new_internal(HuffNode *left, HuffNode *right) {
     return n;
 }
 
-/* ── API pública ── */
-
 void count_frequencies(const uint8_t *data, size_t size, FreqTable freq) {
     memset(freq, 0, sizeof(FreqTable));
     for (size_t i = 0; i < size; i++)
