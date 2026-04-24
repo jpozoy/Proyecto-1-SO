@@ -36,7 +36,6 @@ static int collect_txt(const char *dir, char **files, int *count) {
     return 0;
 }
 
-//p
 static int cmp_str(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
@@ -49,6 +48,32 @@ static void fwrite_le32(FILE *f, uint32_t val) {
         (uint8_t)((val >> 24) & 0xFF)
     };
     fwrite(buf, 1, 4, f);
+}
+
+typedef struct {
+    char            **files;
+    const char       *base_dir;
+    CompressedBlock  *results;
+    int              *next;
+    int               total;
+    pthread_mutex_t  *mtx;
+} WorkerCtx;
+
+static void *worker(void *arg) {
+    WorkerCtx *ctx = (WorkerCtx *)arg;
+    while (1) {
+        pthread_mutex_lock(ctx->mtx);
+        int idx = *(ctx->next);
+        if (idx >= ctx->total) {
+            pthread_mutex_unlock(ctx->mtx);
+            break;
+        }
+        (*(ctx->next))++;
+        pthread_mutex_unlock(ctx->mtx);
+
+        ctx->results[idx] = compress_one_file(ctx->files[idx], ctx->base_dir);
+    }
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -71,7 +96,6 @@ int main(int argc, char *argv[]) {
 
     long long t_start = now_ms();
 
-    /* Arreglo de resultados, uno por archivo */
     CompressedBlock *results = calloc(num_files, sizeof(CompressedBlock));
     int next = 0;
     pthread_mutex_t mtx;
@@ -86,7 +110,6 @@ int main(int argc, char *argv[]) {
         .mtx      = &mtx
     };
 
-    /* Lanzar hilos */
     int nthreads = NUM_THREADS < num_files ? NUM_THREADS : num_files;
     pthread_t *threads = malloc(sizeof(pthread_t) * nthreads);
     for (int i = 0; i < nthreads; i++)
@@ -98,7 +121,6 @@ int main(int argc, char *argv[]) {
     pthread_mutex_destroy(&mtx);
     free(threads);
 
-    /* Hilo principal escribe el archivo final en orden */
     FILE *out = fopen(output_file, "wb");
     if (!out) {
         fprintf(stderr, "Error: no se pudo abrir %s\n", output_file);
